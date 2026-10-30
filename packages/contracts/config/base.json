@@ -1,0 +1,25 @@
+{
+  "chainId": 8453,
+  "_sources": {
+    "liquidityLauncher": "Uniswap/liquidity-launcher README @ 1c59049, 'Liquidity Launcher' table (v3.2.0, commit dd8769c)",
+    "poolManager": "liquidity-launcher script/contracts/Parameters.sol @ 1c59049 (BASE_POOL_MANAGER); developers.uniswap.org v4 deployments, Base",
+    "positionManager": "liquidity-launcher script/contracts/Parameters.sol @ 1c59049 (BASE_POSITION_MANAGER); developers.uniswap.org v4 deployments, Base",
+    "permit2": "liquidity-launcher script/contracts/Parameters.sol @ 1c59049 (PERMIT2)",
+    "create2Deployer": "liquidity-launcher script/contracts/Parameters.sol @ 1c59049 (DEFAULT_CREATE2_DEPLOYER)",
+    "universalRouter": "Uniswap/universal-router deploy-addresses/base.json (UniversalRouterV2_1_2); developers.uniswap.org v4 deployments, Base",
+    "v4Quoter": "developers.uniswap.org v4 deployments, Base (Quoter)",
+    "stateView": "developers.uniswap.org v4 deployments, Base (StateView)",
+    "uerc20FactoryCanonical": "Uniswap/uerc20-factory README @ de5bacd (v2.0.0); salt from script/DeployUERC20Factory.s.sol"
+  },
+  "liquidityLauncher": "0x0000FffFBE8efE702c8703aE3477FF5dE3d319C0",
+  "poolManager": "0x498581fF718922c3f8e6A244956aF099B2652b2b",
+  "positionManager": "0x7C5f5A4bBd8fD63184577525326123B519429bDc",
+  "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+  "create2Deployer": "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+  "universalRouter": "0xd6145b2D3F379919E8CdEda7B97e37c4b2Ca9c40",
+  "v4Quoter": "0xE1A6C5803e3c44368b171BD680c7D32dfc92CA47",
+  "stateView": "0xa3c0c9b65bad0b08107aa264b0f3db444b867a71",
+  "uerc20FactoryCanonical": "0x000000e200088D55C39a11F609E5F667729ad49b",
+  "uerc20FactorySalt": "0x2e36e8638e3163474ff2b2a355e1de801786d9ef34436cd7dd6418693d4474d8",
+  "uerc20FactoryInitCodeHash": "0xa30fe8b6c33a03e61dcdd8cafc5d01d1ccea33e3729966ca740632387bec5eca"
+}
