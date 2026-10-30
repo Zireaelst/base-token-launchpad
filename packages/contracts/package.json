@@ -1,0 +1,10 @@
+{
+  "name": "@launchpad/contracts",
+  "private": true,
+  "scripts": {
+    "build:upstream": "bash script/build-upstream.sh",
+    "build": "bash script/build-upstream.sh && forge build",
+    "test:fork": "forge test --fork-url \"$BASE_RPC_URL\" -vv",
+    "lint": "forge fmt --check script test"
+  }
+}

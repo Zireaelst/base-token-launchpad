@@ -1,0 +1,10 @@
+forge-std/=lib/forge-std/src/
+@liquidity-launcher/=lib/liquidity-launcher/src/
+@uniswap/v4-core/=lib/liquidity-launcher/lib/v4-core/
+@uniswap/v4-periphery/=lib/liquidity-launcher/lib/v4-periphery/
+@openzeppelin/contracts/=lib/liquidity-launcher/lib/openzeppelin-contracts/contracts/
+@openzeppelin=lib/liquidity-launcher/lib/openzeppelin-contracts/
+solady/=lib/liquidity-launcher/lib/solady/src/
+@solady/=lib/liquidity-launcher/lib/solady/
+permit2/=lib/liquidity-launcher/lib/permit2/
+@uniswap/uerc20-factory/=lib/uerc20-factory/

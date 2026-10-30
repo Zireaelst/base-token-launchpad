@@ -1,0 +1,33 @@
+# Our own code (deploy script + fork tests) only.
+# Audited upstream contracts are NOT compiled with these settings: `script/build-upstream.sh`
+# builds each submodule in its own root with its own foundry.toml, and the deploy script
+# deploys those artifacts (initcode hashes are asserted, see script/LaunchpadDeploy.sol).
+[profile.default]
+src = "script"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc = "0.8.26"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
+ignored_error_codes = [2424]
+fs_permissions = [
+  { access = "read", path = "./config" },
+  { access = "read", path = "./lib/liquidity-launcher/out" },
+  { access = "read", path = "./lib/uerc20-factory/out" },
+]
+
+[profile.default.fuzz]
+runs = 256
+
+[rpc_endpoints]
+base = "${BASE_RPC_URL}"
+
+[etherscan]
+base = { key = "${ETHERSCAN_API_KEY}", chain = 8453 }
+
+[lint]
+lint_on_build = false

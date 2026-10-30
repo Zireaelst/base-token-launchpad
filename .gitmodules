@@ -1,0 +1,9 @@
+[submodule "packages/contracts/lib/liquidity-launcher"]
+	path = packages/contracts/lib/liquidity-launcher
+	url = https://github.com/Uniswap/liquidity-launcher.git
+[submodule "packages/contracts/lib/uerc20-factory"]
+	path = packages/contracts/lib/uerc20-factory
+	url = https://github.com/Uniswap/uerc20-factory.git
+[submodule "packages/contracts/lib/forge-std"]
+	path = packages/contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std.git
