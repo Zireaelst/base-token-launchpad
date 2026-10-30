@@ -1,0 +1,26 @@
+{
+  "name": "@launchpad/indexer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ponder dev",
+    "start": "ponder start",
+    "codegen": "ponder codegen",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src ponder.config.ts ponder.schema.ts test",
+    "test": "vitest run --dir test --exclude '**/*.fork.test.ts'",
+    "test:fork": "vitest run --dir test fork --testTimeout=120000"
+  },
+  "dependencies": {
+    "@launchpad/sdk": "workspace:*",
+    "drizzle-orm": "0.41.0",
+    "hono": "4.13.14",
+    "ponder": "0.18.3",
+    "viem": "2.57.13"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}
