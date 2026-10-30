@@ -1,0 +1,85 @@
+/* Design tokens: a monochrome LED / terminal wall. Colour only on buy, sell, price change and focus.
+   Light is the default; dark follows the system or [data-theme="dark"]. Both pass WCAG AA for text. */
+:root {
+  --bg: #f2f2ef;
+  --ink: #0d0d0d;
+  /* --mute on --bg is 4.6:1 (AA for body text). The spec's #8a8a86 is 3.2:1, so we darken it for text. */
+  --mute: #5f5f5b;
+  --line: #d9d9d4;
+  --buy: #0052ff;
+  --sell: #c62a2f;
+  --focus: #0052ff;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0b0b;
+    --ink: #ededea;
+    --mute: #9a9a95;
+    --line: #222222;
+    --buy: #4d86ff;
+    --sell: #ff6b70;
+    --focus: #4d86ff;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0b0b;
+  --ink: #ededea;
+  --mute: #9a9a95;
+  --line: #222222;
+  --buy: #4d86ff;
+  --sell: #ff6b70;
+  --focus: #4d86ff;
+  color-scheme: dark;
+}
+
+/* Visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@keyframes lp-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes lp-dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}
+
+.lp-cursor::after {
+  content: "█";
+  margin-left: 1px;
+  animation: lp-blink 1s steps(1) infinite;
+}
+
+.lp-dots::after {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: left;
+  content: "...";
+  animation: lp-dots 1.2s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-cursor::after,
+  .lp-dots::after {
+    animation: none;
+  }
+}

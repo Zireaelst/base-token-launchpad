@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@import "@launchpad/ui/tokens.css";
+@source "../../../packages/ui/src";
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-buy: var(--buy);
+  --color-sell: var(--sell);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-pixel: var(--font-geist-pixel-square), var(--font-geist-mono), monospace;
+  --font-pixel-grid: var(--font-geist-pixel-grid), var(--font-geist-mono), monospace;
+  --font-pixel-line: var(--font-geist-pixel-line), var(--font-geist-mono), monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers line up in tables and boxes. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Blinking block cursor on inputs (where the browser supports caret-shape). */
+.lp-input {
+  caret-color: var(--ink);
+  caret-shape: block;
+}

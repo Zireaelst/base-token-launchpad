@@ -1,4 +1,6 @@
-import { encodeFunctionData } from "viem";
+import type { Client } from "viem";
+import { decodeFunctionResult, encodeFunctionData } from "viem";
+import { readContract, simulateCalls } from "viem/actions";
 import { beneficiaryVaultAbi, feeSplitterAbi } from "./abis.generated.ts";
 import type { LaunchpadContext } from "./addresses.ts";
 import {
@@ -55,4 +57,48 @@ export function prepareClaimAllSequential(
   return [collectCall(ctx, tokenIds), ...tokenIds.map((id) => claimCall(ctx, id))].map((c) =>
     attribute(c, attribution),
   );
+}
+
+export type Claimable = { positionId: bigint; nativeWei: bigint; tokenAmount: bigint };
+
+/**
+ * Exact claimable fees per position: simulates the permissionless `collectFees` and then reads the
+ * vault's attributed `amounts` in one eth_simulateV1 call, so fees still sitting in the pool are included.
+ * Falls back to the already-collected `amounts` if the RPC does not support eth_simulateV1
+ * (`includesUncollected` tells the UI which number it is showing).
+ */
+export async function readClaimable(
+  client: Client,
+  ctx: LaunchpadContext,
+  positionIds: readonly bigint[],
+): Promise<{ items: Claimable[]; includesUncollected: boolean }> {
+  if (positionIds.length === 0) return { items: [], includesUncollected: true };
+  const reads = positionIds.map((id) => ({
+    to: ctx.deployment.beneficiaryVault,
+    data: encodeFunctionData({ abi: beneficiaryVaultAbi, functionName: "amounts", args: [id] }),
+  }));
+  try {
+    const { results } = await simulateCalls(client, { calls: [collectCall(ctx, positionIds), ...reads] });
+    if (results[0]?.status !== "success") throw new Error("collect simulation failed");
+    const items = positionIds.map((positionId, i) => {
+      const r = results[i + 1];
+      if (!r || r.status !== "success") throw new Error("amounts read failed");
+      const [nativeWei, tokenAmount] = decodeFunctionResult({ abi: beneficiaryVaultAbi, functionName: "amounts", data: r.data });
+      return { positionId, nativeWei, tokenAmount };
+    });
+    return { items, includesUncollected: true };
+  } catch {
+    const items = await Promise.all(
+      positionIds.map(async (positionId) => {
+        const [nativeWei, tokenAmount] = await readContract(client, {
+          address: ctx.deployment.beneficiaryVault,
+          abi: beneficiaryVaultAbi,
+          functionName: "amounts",
+          args: [positionId],
+        });
+        return { positionId, nativeWei, tokenAmount };
+      }),
+    );
+    return { items, includesUncollected: false };
+  }
 }
