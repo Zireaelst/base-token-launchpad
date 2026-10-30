@@ -182,7 +182,7 @@ Consequences:
 - Every launcher contract is built with **solc 0.8.26**: `InstantLaunchStrategy` and `LiquidityLauncher` pin it. Our `UniversalRouterStrategy` lands on `0x0A122717…b3Ae`, Uniswap's own address on Robinhood Chain and Arc, which proves the build reproduces Uniswap's bytecode.
 - `FeeSplitter`, `BeneficiaryVault` and `UniversalRouterStrategy` declare `^0.8.26`. Compiled alone with auto-detect, they get a newer solc and different bytecode. So `build-upstream.sh` passes `--use 0.8.26`, and `verify-basescan.sh` passes `--compiler-version v0.8.26+commit.8a97fa7a`.
 - Checked: the verify standard-JSON input recompiles to the exact deployed artifact for all four launcher contracts.
-- The nested `openzeppelin-contracts` submodule in `liquidity-launcher` uses an SSH URL. Clone with `git -c url."https://github.com/".insteadOf="git@github.com:" submodule update --init --recursive`; CI does the same.
+- The nested `openzeppelin-contracts` submodule in `liquidity-launcher` uses an SSH URL. Clone with `git -c url."https://github.com/".insteadOf="git@github.com:" submodule update --init --recursive`.
 
 ## 10. Known contract-level risks (acknowledged upstream, not fixed) and our mitigations
 
@@ -216,22 +216,13 @@ So:
 - test at 375px with an injected provider;
 - **NEEDS YOU:** base.dev account actions (M4).
 
-## 13. Tooling gaps. **NEEDS YOU (5 min)**
+## 13. Tooling. **DONE 2026-10-30 (except the deployer key)**
 
-The setup block in `MASTER_PROMPT.md` §0 has not been run on this machine:
-- `build-on-base` skill not installed (I read it from GitHub @ `95b8ab2` instead);
-- `base-docs` MCP not configured (I used `llms.txt` and the web pages instead);
-- no Foundry keystore named `deployer`;
-- local Node is **22.23.2**, but the prompt requires **Node 24 LTS**.
-
-Please run:
-
-```bash
-npx skills add base/skills --skill build-on-base
-claude mcp add --transport http base-docs https://docs.base.org/mcp
-cast wallet import deployer --interactive
-# and install Node 24 LTS (e.g. `brew install node@24` or nvm)
-```
+- `build-on-base` skill installed in the project (`.agents/skills/build-on-base`, symlinked from `.claude/skills`, locked in `skills-lock.json`). `SKILL.md` is identical to `base/skills` @ `95b8ab2`, the version reviewed in M0.
+- `base-docs` MCP added (`claude mcp add --transport http base-docs https://docs.base.org/mcp`, local scope).
+- Node 24.22.2 installed (`brew install node@24`). The shell PATH still points at node@22; the user switches it.
+- CI removed for now at the user's request (2026-10-30). Fork tests run locally against Base: the public RPC `https://mainnet.base.org` for now, a dedicated RPC before launch.
+- Deployer key: still open (see §15).
 
 ## 14. UERC20Factory reproducibility check. **DECIDED: reproducible**
 
