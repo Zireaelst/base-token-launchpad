@@ -254,6 +254,45 @@ That is exactly Uniswap's canonical address (13,380 bytes of code on Ethereum ma
 
 ---
 
+## 17. Where the Builder Code suffix is attached. **DECIDED in M2**
+
+The `build-on-base` skill prefers a client-level `dataSuffix` in the wagmi config. We attach it in the SDK instead:
+
+- Every `prepare*` builder returns an `AttributedTx`, whose data ends with the ERC-8021 suffix. That type is branded and only `attribute()` produces it. The web app's send helpers accept only `AttributedTx` / `AttributedBatch`, so an unattributed transaction does not compile.
+- For EIP-5792 `wallet_sendCalls`, `AttributedBatch` also carries `capabilities.dataSuffix`, so the suffix lands on the outer userOp callData, per `smart-wallets.md`.
+- **The wagmi config must not also set `dataSuffix`**, or the suffix would be appended twice. A test asserts each builder appends it exactly once.
+- Why: "every transaction carries our Builder Code" becomes a unit-testable property of the SDK (rule 3), not of a runtime config.
+- Proven on a Base fork: launch, first buy, buy, sell, Permit2 approval, collect and claim all succeed with the suffix, and `Attribution.fromData` decodes our code from the transaction input as it landed on-chain.
+- The code comes from env (`NEXT_PUBLIC_BUILDER_CODE`). Tests use `bc_test`.
+
+## 18. Selling needs a one-time Permit2 approval. **DECIDED in M2 (rule 6 justification)**
+
+The Universal Router pulls sold tokens through Permit2.
+
+- UERC20 already grants Permit2 an infinite ERC-20 allowance (Solady default, verified on the fork), so no ERC-20 `approve` is ever needed.
+- The first sell of a token on an EOA takes one extra transaction: `permit2.approve(token, router, max, now + 30 days)`, the same window Uniswap's interface uses. Later sells are one transaction.
+- Smart wallets batch the approval and the sell in one `wallet_sendCalls`.
+- **Justification:** the only alternative is a Permit2 signature on every sell, which is also two wallet prompts.
+
+## 19. First-buy minimum output. **DECIDED in M2**
+
+The pool is created inside the same transaction, so the first buy's output is deterministic. A pre-initialized pool (CR-01) makes the whole launch revert. `firstBuyMinOut` therefore defaults to 0; the app may pass a simulated amount minus slippage.
+
+## 20. Indexer design. **DECIDED in M2**
+
+- **Ponder 0.18.3:** PGlite locally, Postgres (`DATABASE_URL`) in production.
+- **Swaps:** Base's PoolManager emits a very large number of `Swap` events, and Ponder cannot filter on a growing set of pool ids. So we index our tokens' `Transfer` events (factory pattern on `TokenLaunched`). For transfers touching the PoolManager, we fetch the receipt (cached by Ponder) and read the `Swap` logs matching the token's pool id.
+- **Trader identity:** the trader is the counterparty of the token transfer: the recipient on buys, the payer on sells. That is the smart account for smart wallets, not the bundler.
+- **Creator:** the beneficiary NFT mint in the launch receipt, not `tx.from`.
+- **Prices:** integers, in wei per whole token (`2^192 · 1e18 / sqrtPriceX96²`). OHLC is built only from real swaps, at 1m / 5m / 1h / 1d. "1h change" compares against the last trade before the cutoff, or the opening price.
+- **Holders:** from transfers; the PoolManager row is labelled as the pool.
+- **Stats:** `/stats` excludes `EXCLUDED_WALLETS`.
+- **Verified on a fork:**
+  - holder balances equal `balanceOf` and sum to the fixed supply;
+  - volume equals the sum of trades;
+  - creator fees match 60% of collected LP fees exactly;
+  - stats match the token list.
+
 ## Plan for M1 → M5 (unchanged scope, adjusted by the above)
 
 - **M1 (branch `m1-contracts`):**
