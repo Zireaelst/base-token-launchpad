@@ -22,7 +22,7 @@ Legend: **DECIDED**: settled from source, no input needed. **PROPOSED**: my reco
 
 ---
 
-## 1. Which commit to pin. **PROPOSED**
+## 1. Which commit to pin. **APPROVED 2026-10-30**
 
 The prompt pins `1c5904912aefceaceb89c24528cd5e25d0b61597` and calls it "v3.3.0". What the source shows:
 
@@ -56,7 +56,7 @@ Other Base addresses, all read from `script/contracts/Parameters.sol` @ `1c59049
 | Permit2 | `0x000000000022D473030F116dDEE9F6B43aC78BA3` |
 | CREATE2 deployer | `0x4e59b44847b379578588920cA78FbF26c0B4956C` |
 
-## 3. Token factory. **PROPOSED (discrepancy with prompt)**
+## 3. Token factory. **APPROVED 2026-10-30: option A**
 
 The prompt says to reuse "the audited UERC20 factory used by the launcher (address from README)". **No UERC20Factory is deployed on Base:**
 
@@ -75,7 +75,7 @@ The options:
 **Proposal: A.** The bytecode reproduces the canonical address (§14).
 This deviates from rule 1's "reuse Uniswap's deployed factory" only because no such factory exists on Base. We would still deploy only audited, unmodified bytecode.
 
-## 4. Fee splits and constructor arguments. **NEEDS YOU (token side)**
+## 4. Fee splits and constructor arguments. **APPROVED 2026-10-30: T1 (token side 60/40); revisit in `docs/backlog.md`**
 
 `FeeSplitter(positionManager, FeeSplit[])`: each side independently sums to 10,000 bps; recipients are non-zero and unique; `useCallback` requires a contract.
 
@@ -108,7 +108,7 @@ I won't pick, because this changes the creator/platform split. **Default if you 
 
 **`PLATFORM_TREASURY`:** a Safe on Base, from env. **NEEDS YOU: the address.**
 
-## 5. Initial tick. **PROPOSED (discrepancy with prompt)**
+## 5. Initial tick. **APPROVED 2026-10-30: 198_050**
 
 The prompt says to copy the tick from "Uniswap's own Base deployment parameters". **There is no Uniswap `InstantLaunchStrategy` on Base.** The README lists only Robinhood Chain (tick 198,050) and Arc (122,050).
 
