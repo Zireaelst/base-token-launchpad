@@ -10,5 +10,8 @@
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "pnpm -r --if-present lint"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4"
   }
 }
