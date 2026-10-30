@@ -22,4 +22,4 @@ coverage/
 
 # os
 .DS_Store
-deployments/local.json
+packages/contracts/deployments/local.json
