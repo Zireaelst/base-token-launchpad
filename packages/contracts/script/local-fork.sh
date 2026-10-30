@@ -24,25 +24,39 @@ trap 'kill $ANVIL_PID 2>/dev/null || true' EXIT
 for _ in $(seq 1 60); do cast chain-id --rpc-url "$RPC" >/dev/null 2>&1 && break; sleep 1; done
 [ "$(cast chain-id --rpc-url "$RPC")" = "8453" ] || { echo "anvil fork is not Base (8453)"; exit 1; }
 
+# Indexing starts right after the fork point: everything later is local activity.
+START_BLOCK=$(( $(cast block-number --rpc-url "$RPC") + 1 ))
+
 # Contract code so the deploy script's "treasury must be a contract" guard passes.
 cast rpc anvil_setCode "$TREASURY" 0x00 --rpc-url "$RPC" >/dev/null
 SENDER=$(cast rpc eth_accounts --rpc-url "$RPC" | python3 -I -c "import json,sys; print(json.load(sys.stdin)[0])")
 
-PLATFORM_TREASURY=$TREASURY forge script script/DeployLaunchpad.s.sol:DeployLaunchpad \
-  --rpc-url "$RPC" --sender "$SENDER" --unlocked --broadcast --json \
-  | python3 -I -c "
+# Deploy and wait for the broadcast to finish before publishing anything.
+OUT=$(PLATFORM_TREASURY=$TREASURY forge script script/DeployLaunchpad.s.sol:DeployLaunchpad \
+  --rpc-url "$RPC" --sender "$SENDER" --unlocked --broadcast --json)
+rm -rf broadcast/DeployLaunchpad.s.sol/8453 cache/DeployLaunchpad.s.sol
+
+# Write deployments/local.json only after every contract has code, so waiters never see a half deploy.
+ADDRS=$(printf '%s\n' "$OUT" | python3 -I -c "
 import json, sys
 for line in sys.stdin:
     try: obj = json.loads(line)
     except ValueError: continue
     ret = obj.get('returns', {}).get('d', {}).get('value')
-    if ret:
-        keys = ['tokenFactory', 'beneficiaryVault', 'feeSplitter', 'instantLaunchStrategy', 'universalRouterStrategy']
-        vals = ret.strip('()').split(', ')
-        out = dict(zip(keys, vals), treasury='$TREASURY', rpcUrl='$RPC', chainId=8453)
-        json.dump(out, open('deployments/local.json', 'w'), indent=2)
-        print('local fork ready:', json.dumps(out))
-"
-rm -rf broadcast/DeployLaunchpad.s.sol/8453 cache/DeployLaunchpad.s.sol
-[ -f deployments/local.json ] || { echo "deploy failed"; exit 1; }
+    if ret: print(ret.strip('()').replace(',', ''))
+")
+[ -n "$ADDRS" ] || { echo "deploy failed"; exit 1; }
+for a in $ADDRS; do
+  [ "$(cast codesize "$a" --rpc-url "$RPC")" -gt 0 ] || { echo "no code at $a"; exit 1; }
+done
+python3 -I - "$ADDRS" "$TREASURY" "$RPC" "$START_BLOCK" <<'PY'
+import json, sys
+addrs, treasury, rpc, start = sys.argv[1].split(), sys.argv[2], sys.argv[3], int(sys.argv[4])
+keys = ["tokenFactory", "beneficiaryVault", "feeSplitter", "instantLaunchStrategy", "universalRouterStrategy"]
+out = dict(zip(keys, addrs), treasury=treasury, rpcUrl=rpc, chainId=8453, startBlock=start)
+tmp = "deployments/local.json.tmp"
+json.dump(out, open(tmp, "w"), indent=2)
+import os; os.replace(tmp, "deployments/local.json")
+print("local fork ready:", json.dumps(out))
+PY
 wait $ANVIL_PID
