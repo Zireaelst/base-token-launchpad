@@ -33,3 +33,19 @@ bash script/build-upstream.sh && forge build   # audited code is built in its ow
 export BASE_RPC_URL=https://...                 # any Base mainnet RPC
 forge test --fork-url "$BASE_RPC_URL"
 ```
+
+## SDK and indexer against a local Base fork
+
+```bash
+pnpm install
+bash packages/contracts/script/local-fork.sh &        # anvil fork of Base + our contracts -> deployments/local.json
+pnpm --filter @launchpad/sdk test:fork                 # real attributed launch, buy, sell, claim on the fork
+
+cd apps/indexer
+LAUNCHPAD_DEPLOYMENT=../../packages/contracts/deployments/local.json \
+PONDER_RPC_URL_8453=http://127.0.0.1:8545 \
+pnpm start --schema local                              # API on http://127.0.0.1:42069
+pnpm test:fork                                         # indexer vs chain
+```
+
+`pnpm typecheck && pnpm lint && pnpm test && pnpm build` runs the offline checks for the whole workspace.

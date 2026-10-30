@@ -1,0 +1,25 @@
+{
+  "name": "@launchpad/sdk",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gen:abis": "node scripts/gen-abis.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "lint": "biome check src test scripts",
+    "test": "vitest run --dir test --exclude '**/*.fork.test.ts'",
+    "test:fork": "vitest run --dir test fork --testTimeout=120000"
+  },
+  "dependencies": {
+    "ox": "1.8.12",
+    "viem": "2.57.13"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}
