@@ -11,7 +11,7 @@
     "build": "tsc --noEmit",
     "lint": "biome check src test scripts",
     "test": "vitest run --dir test --exclude '**/*.fork.test.ts'",
-    "test:fork": "vitest run --dir test fork"
+    "test:fork": "vitest run --dir test fork --testTimeout=120000"
   },
   "dependencies": {
     "ox": "1.8.12",
