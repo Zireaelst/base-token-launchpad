@@ -35,6 +35,8 @@ The prompt pins `1c5904912aefceaceb89c24528cd5e25d0b61597` and calls it "v3.3.0"
 
 **Proposal:** pin `1c59049` as instructed. It is byte-for-byte what Uniswap runs in production for this strategy. M1 then includes a **gating fork test** proving that `triggerFeeUpdate` succeeds on Base for our pool key. If that test fails, I stop and report rather than switching commits on my own.
 
+**M1 result:** the gating test passes on a Base fork (block 53,284,643); see §9.
+
 **Audit coverage, stated precisely.** OpenZeppelin's v3.0.0 audit (four phases, 2026-07-22 → 07-28) covered `FeeSplitter`, `BeneficiaryVault`, `UERC20BeneficiaryVault`, `InstantLaunchStrategy` (as "DirectLaunchStrategy"), `UniversalRouterStrategy` and `LiquidityLauncher` at earlier commits. The `StrategyBase` / `triggerFeeUpdate` change from 3.3.0 came **after** that audit. Of 23 findings, 11 are resolved. The ones that matter to us are acknowledged but not fixed: M-01, L-01, L-02, L-08 and CR-01 (see §10).
 → The copy will say "built on Uniswap Liquidity Launcher, audited by OpenZeppelin (report ↗)", not a blanket "audited". The roadmap's "6 audits" claim also needs this nuance, because the older audits predate these contracts.
 
@@ -161,13 +163,26 @@ Fees reach the creator in two on-chain steps:
 - **Justification:** unavoidable without a custom contract, which is out of scope.
 - **Rejected:** a server-side keeper calling `collectFees`. It needs a hot key on the server, which conflicts with rule 4. Revisit later with a CDP server wallet if you want it.
 
-## 9. Protocol fee on Base. **OPEN, measured in M1**
+## 9. Protocol fee on Base. **MEASURED in M1: 0.04% each direction**
 
-Base's `V4FeeAdapter` (owner/feeSetter `0x31FAfd48…72A9`, TokenJar `0x9bD25e67…168c`) is called by our strategy through `triggerFeeUpdate`. If it sets a non-zero protocol fee for our pool tier:
-- traders pay slightly more than 0.25%;
-- Uniswap takes its cut before LPs.
+Base's `V4FeeAdapter` (owner/feeSetter `0x31FAfd48…72A9`, TokenJar `0x9bD25e67…168c`) is called by our strategy through `triggerFeeUpdate`. The fork test `test_launch_feeUpdateSucceedsOnBase_reportProtocolFee` (block 53,284,643) shows:
 
-M1 fork test reads `slot0().protocolFee` after launch and measures fee flow per swap. The rules card will show the **on-chain** number ("LP fee 0.25% + Uniswap protocol fee x%" if non-zero), not a hard-coded one.
+- `triggerFeeUpdate` succeeds on Base, so the strict path of commit `1c59049` (§1) works. **Gate passed.**
+- It sets a protocol fee of **400 pips (0.04%) on buys and on sells**.
+- The effective swap fee is `400 + 2500 − 400·2500/1e6 = 2899` pips, ≈ **0.29%**.
+- Uniswap takes its 0.04% first. Creators and the platform split the 0.25% LP fee: a 1 ETH buy produced 0.002499 ETH of LP fees, then 60% / 40%.
+
+Consequences:
+- The rules card shows the **on-chain** fee, read live from `slot0`, because Uniswap governance can change it: "TRADE FEE 0.29% = 0.25% LP fee (creator 60% · platform 40%) + 0.04% Uniswap protocol fee".
+- Marketing copy and the grant text must not say "0.25% trade fee" alone.
+- Our split is unchanged. This is disclosure, not a fee change.
+
+## 9b. Compiler pin and bytecode fidelity. **DECIDED in M1**
+
+- Every launcher contract is built with **solc 0.8.26**: `InstantLaunchStrategy` and `LiquidityLauncher` pin it. Our `UniversalRouterStrategy` lands on `0x0A122717…b3Ae`, Uniswap's own address on Robinhood Chain and Arc, which proves the build reproduces Uniswap's bytecode.
+- `FeeSplitter`, `BeneficiaryVault` and `UniversalRouterStrategy` declare `^0.8.26`. Compiled alone with auto-detect, they get a newer solc and different bytecode. So `build-upstream.sh` passes `--use 0.8.26`, and `verify-basescan.sh` passes `--compiler-version v0.8.26+commit.8a97fa7a`.
+- Checked: the verify standard-JSON input recompiles to the exact deployed artifact for all four launcher contracts.
+- The nested `openzeppelin-contracts` submodule in `liquidity-launcher` uses an SSH URL. Clone with `git -c url."https://github.com/".insteadOf="git@github.com:" submodule update --init --recursive`; CI does the same.
 
 ## 10. Known contract-level risks (acknowledged upstream, not fixed) and our mitigations
 
