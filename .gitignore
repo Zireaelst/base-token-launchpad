@@ -23,3 +23,6 @@ coverage/
 # os
 .DS_Store
 packages/contracts/deployments/local.json
+apps/web/.data/
+apps/web/playwright-report/
+apps/web/test-results/

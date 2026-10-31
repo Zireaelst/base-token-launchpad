@@ -171,7 +171,7 @@ app.get("/tokens/:address/holders", async (c) => {
     items: rows.map((h) => ({
       account: h.account,
       balance: h.balance,
-      isPool: h.account === addresses.poolManager,
+      isPool: h.account.toLowerCase() === addresses.poolManager.toLowerCase(),
     })),
   });
 });
