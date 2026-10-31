@@ -293,6 +293,37 @@ The pool is created inside the same transaction, so the first buy's output is de
   - creator fees match 60% of collected LP fees exactly;
   - stats match the token list.
 
+## 21. Colour tokens adjusted for WCAG AA. **DECIDED in M3**
+
+The spec's `--mute #8a8a86` (3.2:1 on `--bg`) and `--sell #e5484d` (about 3.6:1) fail AA as text on the light background, and the spec also requires AA. Light theme uses `--mute #5f5f5b` (4.6:1) and `--sell #c62a2f`; dark uses `--mute #9a9a95` and `--sell #ff6b70`. Everything else is as specified. Lighthouse accessibility is 100 on `/`.
+
+## 22. pnpm minimum-release-age exceptions. **DECIDED in M3 (owner did not object)**
+
+pnpm 12 refuses packages published very recently. It recorded two exceptions in `pnpm-workspace.yaml` that the app needs:
+- `geist@1.9.0`: Geist Pixel fonts;
+- `@base-org/account@2.6.0`: Base Account / Smart Wallet connector.
+
+Both are pinned exactly. Revisit when older versions pass the age check.
+
+## 23. Optional `@x402/*` peers stubbed in the web bundle. **DECIDED in M3**
+
+`@base-org/account` depends on `@coinbase/cdp-sdk`, whose x402 payment helpers import optional `@x402/*` peers. We neither install nor use those, but Turbopack fails on unresolvable imports even in unused code. `next.config.ts` aliases the 20 specifiers to an empty CommonJS stub (`lib/stubs/x402.cjs`). No code path reaches them.
+
+## 24. Token images and the board. **DECIDED in M3**
+
+- Token metadata is on-chain, so anyone launching through another frontend can point `image` anywhere. We render only images from our Blob store or our own upload route; anything else shows a blank tile.
+- The board's dithered tiles load a 64px thumbnail via the Next image optimizer, during idle time. Decoding full 512px images was the main cause of mobile Total Blocking Time.
+- The hero canvas precomputes both poses' dot levels per resize, batches all dots into one path and runs at about 30 fps.
+- Result on `/` (local production build): mobile Lighthouse performance 70 → 96, TBT 1.6 s → 0.2 s.
+
+## 25. Smaller M3 choices
+
+- **Upload validation:** images are decoded server-side with sharp; the client MIME type is not trusted. Output is 512×512 WebP, and its SHA-256 goes on-chain in `extraData` (`{ v, img, x?, tg? }`).
+- **Reports:** stored as **private** Blob objects. Moderation acts by editing `HIDDEN_TOKENS`; a hidden token stays reachable by URL with a warning banner.
+- **Trade-fee line on the rules card:** read live from the pool's `slot0` (§9). The create preview uses the latest launch's real fee, or says "set at launch".
+- **"Creator earnings" on the board:** fees *collected* through the FeeSplitter so far. Uncollected fees are shown exactly on the profile (§8, `readClaimable`).
+- **Gas sponsorship:** behind `NEXT_PUBLIC_SPONSOR_FIRST_LAUNCH` (default off), proxied through `/api/paymaster` to `CDP_PAYMASTER_URL`.
+
 ## Plan for M1 → M5 (unchanged scope, adjusted by the above)
 
 - **M1 (branch `m1-contracts`):**

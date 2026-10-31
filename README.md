@@ -49,3 +49,14 @@ pnpm test:fork                                         # indexer vs chain
 ```
 
 `pnpm typecheck && pnpm lint && pnpm test && pnpm build` runs the offline checks for the whole workspace.
+
+## Web app on a local Base fork
+
+```bash
+bash scripts/local-stack.sh                    # fork + contracts + indexer + web on http://localhost:3000
+WEB_MODE=prod bash scripts/local-stack.sh      # same with a production build
+cd apps/web && npx playwright install chromium && pnpm e2e   # create → buy → sell → claim through the UI
+```
+
+The e2e test uses a mock injected wallet that forwards to the fork, and checks that every transaction carries the Builder Code.
+Screenshots: `SCREENSHOTS=1 npx playwright test screenshots` writes to `docs/screenshots/m3/`.
