@@ -84,13 +84,13 @@ export type RulesCardRow = { label: string; value: ReactNode; href?: string };
  */
 export function RulesCard({ rows, title = "RULES" }: { rows: RulesCardRow[]; title?: string }) {
   return (
-    <section aria-label="Token rules" className="font-mono text-[13px] leading-6 text-ink">
+    <section aria-label="Token rules" className="min-w-0 font-mono text-[13px] leading-6 text-ink">
       <div aria-hidden className="select-none overflow-hidden whitespace-nowrap text-mute">
         {`┌─ ${title} ${"─".repeat(80)}`}
       </div>
       <dl className="border-x border-dashed border-line px-3">
         {rows.map((r) => (
-          <div key={r.label} className="grid grid-cols-[10ch_1fr] gap-x-3 py-0.5">
+          <div key={r.label} className="grid grid-cols-[10ch_minmax(0,1fr)] gap-x-3 py-0.5">
             <dt className="text-mute">{r.label}</dt>
             <dd className="min-w-0 break-words">
               {r.href ? (

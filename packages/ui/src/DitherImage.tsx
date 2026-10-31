@@ -7,9 +7,21 @@ const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => 
 
 /**
  * Token image through a 1-bit ordered dither, so every list row looks uniform and on-brand.
- * Draws once (no animation). If the image cannot be read (CORS, 404), falls back to an empty tile.
+ * Draws once (no animation), during browser idle time, from a small thumbnail (`thumbnail` maps the source
+ * to a ~64px URL, e.g. via the Next image optimizer) so a full-size decode never blocks the main thread.
+ * If the image cannot be read (CORS, 404), falls back to an empty tile.
  */
-export function DitherImage({ src, size = 40, alt }: { src: string; size?: number; alt: string }) {
+export function DitherImage({
+  src,
+  size = 40,
+  alt,
+  thumbnail = (s) => s,
+}: {
+  src: string;
+  size?: number;
+  alt: string;
+  thumbnail?: (src: string) => string;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -47,11 +59,16 @@ export function DitherImage({ src, size = 40, alt }: { src: string; size?: numbe
         }
       }
     };
-    img.src = src;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout;
+    const id = idle(() => {
+      img.src = thumbnail(src);
+    });
     return () => {
       cancelled = true;
+      cancelIdle(id as number);
     };
-  }, [src]);
+  }, [src, thumbnail]);
 
   return (
     <canvas

@@ -82,8 +82,12 @@ export async function readClaimable(
     if (results[0]?.status !== "success") throw new Error("collect simulation failed");
     const items = positionIds.map((positionId, i) => {
       const r = results[i + 1];
-      if (!r || r.status !== "success") throw new Error("amounts read failed");
-      const [nativeWei, tokenAmount] = decodeFunctionResult({ abi: beneficiaryVaultAbi, functionName: "amounts", data: r.data });
+      if (r?.status !== "success") throw new Error("amounts read failed");
+      const [nativeWei, tokenAmount] = decodeFunctionResult({
+        abi: beneficiaryVaultAbi,
+        functionName: "amounts",
+        data: r.data,
+      });
       return { positionId, nativeWei, tokenAmount };
     });
     return { items, includesUncollected: true };
