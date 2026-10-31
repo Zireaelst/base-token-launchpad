@@ -12,6 +12,10 @@ RPC="http://127.0.0.1:${PORT}"
 # A placeholder treasury contract (local fork only; mainnet uses the Safe from PLATFORM_TREASURY).
 TREASURY=0x000000000000000000000000000000000000F00D
 
+if lsof -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "port $PORT is already in use (a previous fork still running?)"; exit 1
+fi
+
 rm -f deployments/local.json
 mkdir -p deployments
 
