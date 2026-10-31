@@ -67,7 +67,7 @@ function Candles({ candles }: { candles: Candle[] }) {
     <figure>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="mt-2 h-[220px] w-full"
+        className="mt-2 h-[220px] w-full max-w-full"
         role="img"
         aria-label="Candlestick chart"
       >

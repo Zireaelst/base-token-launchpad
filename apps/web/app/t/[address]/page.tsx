@@ -54,7 +54,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
   const tg = links.tg?.replace(/^https:\/\//, "");
 
   return (
-    <article className="grid gap-6 py-6 lg:grid-cols-[1fr_360px]">
+    <article className="grid grid-cols-[minmax(0,1fr)] gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_360px]">
       {isHidden(token.address) && (
         <p role="alert" className="border border-sell p-3 font-mono text-sm text-sell lg:col-span-2">
           This token was reported and is hidden from the board. Check the contract before trading.
@@ -67,7 +67,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
         </div>
       )}
 
-      <div className="grid min-w-0 content-start gap-6">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
         <header className="flex items-center gap-4">
           {image ? (
             <Image
@@ -83,11 +83,11 @@ export default async function TokenPage({ params, searchParams }: Props) {
             <div className="h-[72px] w-[72px] shrink-0 border border-dashed border-line" />
           )}
           <div className="min-w-0">
-            <h1 className="truncate font-pixel text-4xl">${token.symbol}</h1>
+            <h1 className="truncate font-pixel text-3xl sm:text-4xl">${token.symbol}</h1>
             <p className="truncate text-sm text-mute">{token.name}</p>
           </div>
-          <div className="ml-auto text-right font-mono tabular">
-            <p className="text-lg">{formatEth(token.marketCapWei)} ETH</p>
+          <div className="ml-auto shrink-0 text-right font-mono tabular">
+            <p className="whitespace-nowrap text-base sm:text-lg">{formatEth(token.marketCapWei)} ETH</p>
             <p className={`text-xs ${change > 0n ? "text-buy" : change < 0n ? "text-sell" : "text-mute"}`}>
               {formatBpsChange(token.change1hBps)} 1h
             </p>
@@ -106,7 +106,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
         <TradesFeed token={token.address} symbol={token.symbol} />
       </div>
 
-      <aside className="grid content-start gap-6">
+      <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
         <TradePanel token={token.address} symbol={token.symbol} />
         <div className="hidden lg:block">
           <TokenRules

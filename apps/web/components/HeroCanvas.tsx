@@ -71,10 +71,23 @@ export function HeroCanvas() {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const scheme = window.matchMedia("(prefers-color-scheme: dark)");
 
+    // Geometry and both poses' dot levels are computed once per resize, not per frame: per-frame work is
+    // only "pick a level per dot and add a circle to one path". Drift moves the grid by whole pixels and
+    // breathing scales the dot radius, so neither needs the field re-evaluated.
     let w = 0;
     let h = 0;
     let pitch = 6;
+    let cols = 0;
+    let rows = 0;
+    let levels: [Uint8Array, Uint8Array] = [new Uint8Array(), new Uint8Array()];
+    let noise = new Float32Array();
+    let ink = "#000";
+
+    const readInk = () => {
+      ink = getComputedStyle(canvas).color;
+    };
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
@@ -84,6 +97,23 @@ export function HeroCanvas() {
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       pitch = w < 480 ? 5 : 6;
+      cols = Math.ceil(w / pitch);
+      rows = Math.ceil(h / (pitch * 2));
+      const size = Math.min(w, h) * 0.46;
+      levels = [new Uint8Array(cols * rows), new Uint8Array(cols * rows)];
+      noise = new Float32Array(cols * rows);
+      for (let j = 0; j < rows; j++) {
+        const ny = (j * pitch * 2 + pitch - h / 2) / size;
+        for (let i = 0; i < cols; i++) {
+          const nx = (i * pitch + pitch / 2 - w / 2) / size;
+          const k = j * cols + i;
+          noise[k] = hash(i, j);
+          if (nx < -1.1 || nx > 1.1 || ny < -1.1 || ny > 1.1) continue;
+          levels[0][k] = Math.round(mascot(nx, ny, 0) * 4); // 5 dot sizes: 0..4
+          levels[1][k] = Math.round(mascot(nx, ny, 1) * 4);
+        }
+      }
+      readInk();
     };
     resize();
 
@@ -95,13 +125,10 @@ export function HeroCanvas() {
     const DISSOLVE = 1400; // ms of dot-by-dot transition
 
     const draw = (t: number) => {
-      const ink = getComputedStyle(canvas).color;
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = ink;
-
-      const size = Math.min(w, h) * 0.46 * (reduced ? 1 : 1 + 0.015 * Math.sin(t / 900));
-      const cxp = w / 2 + (reduced ? 0 : Math.sin(t / 5000) * w * 0.01);
-      const cyp = h / 2;
+      const breathe = reduced ? 1 : 1 + 0.06 * Math.sin(t / 900);
+      const drift = reduced ? 0 : Math.round(Math.sin(t / 5000) * w * 0.01);
 
       // Pose and dissolve progress.
       const phase = reduced ? 0 : t % (CYCLE * 2);
@@ -112,29 +139,37 @@ export function HeroCanvas() {
 
       // Row glitch: one row shifts a few columns for a beat.
       if (!reduced && t > nextGlitch) {
-        glitchRow = Math.floor(Math.random() * (h / (pitch * 2)));
+        glitchRow = Math.floor(Math.random() * rows);
         glitchShift = (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 3));
         glitchUntil = t + 140;
         nextGlitch = t + 2200 + Math.random() * 2600;
       }
 
-      const rowPitch = pitch * 2;
-      const maxR = pitch * 0.48;
-      for (let j = 0, y = rowPitch / 2; y < h; j++, y += rowPitch) {
-        const shift = j === glitchRow && t < glitchUntil ? glitchShift * pitch : 0;
-        for (let i = 0, x = pitch / 2; x < w; i++, x += pitch) {
-          const nx = (x - cxp) / size;
-          const ny = (y - cyp) / size;
-          if (nx < -1.1 || nx > 1.1 || ny < -1.1 || ny > 1.1) continue;
-          const pose = progress > 0 && hash(i, j) < progress ? to : from;
-          const level = Math.round(mascot(nx, ny, pose) * 4); // 5 dot sizes: 0..4
+      const maxR = (pitch * 0.48 * breathe) / 4;
+      const a = levels[from];
+      const b = levels[to];
+      ctx.beginPath();
+      for (let j = 0; j < rows; j++) {
+        const y = j * pitch * 2 + pitch;
+        const shift = drift + (j === glitchRow && t < glitchUntil ? glitchShift * pitch : 0);
+        for (let i = 0; i < cols; i++) {
+          const k = j * cols + i;
+          const level = progress > 0 && (noise[k] ?? 1) < progress ? (b[k] ?? 0) : (a[k] ?? 0);
           if (level === 0) continue;
-          ctx.beginPath();
-          ctx.arc(x + shift, y, (maxR * level) / 4, 0, Math.PI * 2);
-          ctx.fill();
+          const x = i * pitch + pitch / 2 + shift;
+          const r = maxR * level;
+          ctx.moveTo(x + r, y);
+          ctx.arc(x, y, r, 0, Math.PI * 2);
         }
       }
+      ctx.fill();
     };
+
+    const onScheme = () => {
+      readInk();
+      if (reduced) draw(0);
+    };
+    scheme.addEventListener("change", onScheme);
 
     if (reduced) {
       draw(0);
@@ -143,19 +178,27 @@ export function HeroCanvas() {
         draw(0);
       };
       window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
+      return () => {
+        window.removeEventListener("resize", onResize);
+        scheme.removeEventListener("change", onScheme);
+      };
     }
 
+    // ~30 fps is plenty for a slow LED wall and halves the work on phones.
+    const FRAME_MS = 33;
     let raf = 0;
     let visible = true;
-    let start = performance.now();
+    let last = 0;
+    const start = performance.now();
     const loop = (now: number) => {
-      draw(now - start);
+      if (now - last >= FRAME_MS) {
+        last = now;
+        draw(now - start);
+      }
       raf = requestAnimationFrame(loop);
     };
     const play = () => {
       if (raf || !visible || document.hidden) return;
-      start = performance.now() - 0;
       raf = requestAnimationFrame(loop);
     };
     const pause = () => {
@@ -176,6 +219,7 @@ export function HeroCanvas() {
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", resize);
+      scheme.removeEventListener("change", onScheme);
     };
   }, []);
 

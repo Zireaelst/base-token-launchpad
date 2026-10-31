@@ -74,6 +74,16 @@ export function TokenBoard({ hidden }: { hidden: string[] }) {
   );
 }
 
+/**
+ * 64px thumbnail from the Next image optimizer: the dither only needs 32x32 pixels. Same-origin images
+ * (dev/e2e uploads) are passed as a path so the optimizer treats them as local.
+ */
+const thumb = (src: string) => {
+  const u = new URL(src, window.location.origin);
+  const url = u.origin === window.location.origin ? u.pathname : src;
+  return `/_next/image?url=${encodeURIComponent(url)}&w=64&q=75`; // Next 16 allows only configured qualities (default 75)
+};
+
 function TokenRow({ token: t, tab }: { token: TokenListItem; tab: Tab }) {
   const change = BigInt(t.change1hBps);
   return (
@@ -81,7 +91,7 @@ function TokenRow({ token: t, tab }: { token: TokenListItem; tab: Tab }) {
       href={`/t/${t.address}`}
       className="grid min-h-16 grid-cols-[40px_1fr_auto] items-center gap-3 py-2 sm:grid-cols-[40px_1.2fr_1fr_1fr_1fr_1fr]"
     >
-      <DitherImage src={trustedImage(t.image) ?? ""} alt="" />
+      <DitherImage src={trustedImage(t.image) ?? ""} alt="" thumbnail={thumb} />
       <span className="min-w-0">
         <span className="block truncate font-pixel text-base">${t.symbol}</span>
         <span className="block truncate text-xs text-mute">{t.name}</span>

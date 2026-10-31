@@ -4,7 +4,7 @@ import { prepareLaunch } from "@launchpad/sdk";
 import { Button, DitherImage, TxSteps, TypingDots } from "@launchpad/ui";
 import { track } from "@vercel/analytics";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { type Hex, toHex } from "viem";
 import { useAccount } from "wagmi";
 import { type Fees, TokenRules } from "@/components/TokenRules";
@@ -126,7 +126,11 @@ export function CreateForm({ fees }: { fees: Fees }) {
 
   const ticker = symbol || "TICKER";
   return (
-    <form onSubmit={launch} className="grid gap-8 lg:grid-cols-[1fr_380px]" noValidate>
+    <form
+      onSubmit={launch}
+      className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_380px]"
+      noValidate
+    >
       <div className="grid gap-5">
         <label
           className="flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-ink p-4 text-center"
@@ -164,28 +168,34 @@ export function CreateForm({ fees }: { fees: Fees }) {
         )}
 
         <Field label="Name" hint="1-32 characters">
-          <input
-            required
-            maxLength={32}
-            value={name}
-            onChange={(e) => {
-              markStarted();
-              setName(e.target.value);
-            }}
-            className={inputClass}
-            placeholder="Dot Coin"
-          />
+          {(id) => (
+            <input
+              id={id}
+              required
+              maxLength={32}
+              value={name}
+              onChange={(e) => {
+                markStarted();
+                setName(e.target.value);
+              }}
+              className={inputClass}
+              placeholder="Dot Coin"
+            />
+          )}
         </Field>
         <Field label="Ticker" hint="A-Z and 0-9, up to 10">
-          <input
-            required
-            maxLength={10}
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-            onBlur={() => checkDuplicate(symbol)}
-            className={`${inputClass} font-pixel uppercase`}
-            placeholder="DOT"
-          />
+          {(id) => (
+            <input
+              id={id}
+              required
+              maxLength={10}
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+              onBlur={() => checkDuplicate(symbol)}
+              className={`${inputClass} font-pixel uppercase`}
+              placeholder="DOT"
+            />
+          )}
         </Field>
         {duplicate && (
           <p className="font-mono text-xs">
@@ -194,52 +204,67 @@ export function CreateForm({ fees }: { fees: Fees }) {
           </p>
         )}
         <Field label="Description" hint="optional">
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            maxLength={280}
-            className={inputClass}
-          />
+          {(id) => (
+            <textarea
+              id={id}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              maxLength={280}
+              className={inputClass}
+            />
+          )}
         </Field>
         <details className="font-mono text-sm">
           <summary className="min-h-11 cursor-pointer content-center">Links (optional)</summary>
           <div className="mt-2 grid gap-3">
             <Field label="Website">
-              <input
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                className={inputClass}
-                placeholder="https://"
-              />
+              {(id) => (
+                <input
+                  id={id}
+                  type="url"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className={inputClass}
+                  placeholder="https://"
+                />
+              )}
             </Field>
             <Field label="X">
-              <input
-                value={x}
-                onChange={(e) => setX(e.target.value)}
-                className={inputClass}
-                placeholder="@handle"
-              />
+              {(id) => (
+                <input
+                  id={id}
+                  value={x}
+                  onChange={(e) => setX(e.target.value)}
+                  className={inputClass}
+                  placeholder="@handle"
+                />
+              )}
             </Field>
             <Field label="Telegram">
-              <input
-                value={telegram}
-                onChange={(e) => setTelegram(e.target.value)}
-                className={inputClass}
-                placeholder="t.me/…"
-              />
+              {(id) => (
+                <input
+                  id={id}
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                  className={inputClass}
+                  placeholder="t.me/…"
+                />
+              )}
             </Field>
           </div>
         </details>
         <Field label="First buy (ETH)" hint="optional · bought in the same transaction, before anyone else">
-          <input
-            inputMode="decimal"
-            value={firstBuy}
-            onChange={(e) => setFirstBuy(e.target.value)}
-            className={inputClass}
-            placeholder="0"
-          />
+          {(id) => (
+            <input
+              id={id}
+              inputMode="decimal"
+              value={firstBuy}
+              onChange={(e) => setFirstBuy(e.target.value)}
+              className={inputClass}
+              placeholder="0"
+            />
+          )}
         </Field>
 
         <Button type="submit" disabled={busy} className="w-full sm:w-auto">
@@ -250,7 +275,7 @@ export function CreateForm({ fees }: { fees: Fees }) {
         )}
       </div>
 
-      <aside aria-label="Preview" className="grid content-start gap-4 border border-line p-4">
+      <aside aria-label="Preview" className="grid min-w-0 content-start gap-4 border border-line p-4">
         <div className="flex items-center gap-3">
           {image ? (
             <DitherImage src={image.url} size={56} alt="" />
@@ -272,13 +297,22 @@ export function CreateForm({ fees }: { fees: Fees }) {
 const inputClass =
   "lp-input w-full min-h-11 border border-line bg-transparent px-3 font-mono text-sm outline-none focus:border-ink";
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: (id: string) => React.ReactNode;
+}) {
+  const id = useId();
   return (
-    <label className="grid gap-1">
-      <span className="font-mono text-xs uppercase">
+    <div className="grid gap-1">
+      <label htmlFor={id} className="font-mono text-xs uppercase">
         {label} {hint && <span className="normal-case text-mute">· {hint}</span>}
-      </span>
-      {children}
-    </label>
+      </label>
+      {children(id)}
+    </div>
   );
 }

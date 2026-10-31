@@ -9,6 +9,7 @@ import { isAddressEqual } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { attribution, ctx } from "@/lib/config";
 import { formatEth, formatTokens } from "@/lib/format";
+import { type Creator, indexer } from "@/lib/indexer";
 import { useTx } from "@/lib/useTx";
 
 /**
@@ -35,7 +36,11 @@ export function ClaimPanel({ owner, positions }: { owner: Address; positions: st
     [];
 
   async function claimAll() {
-    const hash = await run(prepareClaimAllBatch(ctx, withFees, attribution));
+    const hash = await run(prepareClaimAllBatch(ctx, withFees, attribution), {
+      // "indexed" only once the indexer has recorded this claim.
+      isIndexed: async (h) =>
+        Boolean((await indexer<Creator>(`/creators/${owner}`))?.claims.some((c) => c.txHash === h)),
+    });
     if (hash) {
       track("fees_claimed");
       await claimable.refetch();

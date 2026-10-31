@@ -1,3 +1,6 @@
 packages:
   - apps/*
   - packages/*
+minimumReleaseAgeExclude:
+  - geist@1.9.0
+  - '@base-org/account@2.6.0'

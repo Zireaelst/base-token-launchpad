@@ -12,7 +12,7 @@ import {
 import { BracketTabs, Button, TxSteps, TypingDots } from "@launchpad/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { track } from "@vercel/analytics";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { type Address, erc20Abi } from "viem";
 import { useAccount, useBalance, usePublicClient, useReadContract } from "wagmi";
 import { attribution, ctx } from "@/lib/config";
@@ -102,10 +102,11 @@ function TradeBox({
     query: { enabled: Boolean(address), refetchInterval: 10_000 },
   });
 
-  useEffect(() => {
+  const switchSide = (next: Side) => {
+    setSide(next);
     reset();
     setAmount("");
-  }, [side, reset]);
+  };
 
   // Buy amounts are typed in ETH; sell amounts are a percentage of the wallet's token balance.
   const amountIn = side === "buy" ? (amount ? parseEthInput(amount) : null) : amount ? BigInt(amount) : null;
@@ -175,7 +176,7 @@ function TradeBox({
 
   return (
     <section aria-label={`Trade $${symbol}`} className="grid gap-3 border border-ink p-4">
-      <BracketTabs tabs={SIDES} value={side} onChange={setSide} label="Trade side" />
+      <BracketTabs tabs={SIDES} value={side} onChange={switchSide} label="Trade side" />
 
       {side === "buy" ? (
         <>

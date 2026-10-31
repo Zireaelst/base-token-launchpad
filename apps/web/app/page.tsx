@@ -9,7 +9,7 @@ import { hiddenTokens } from "@/lib/moderation";
 export const revalidate = 10;
 
 export default async function BoardPage() {
-  const stats = await indexer<Stats>("/stats", { revalidate: 30 });
+  const stats = await indexer<Stats>("/stats", { revalidate: 10 });
   return (
     <>
       <section className="grid items-center gap-6 py-6 sm:grid-cols-2 sm:py-12">

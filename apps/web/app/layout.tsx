@@ -63,7 +63,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             here is financial advice.
           </footer>
         </Providers>
-        <Analytics />
+        {/* The analytics script is served by Vercel; elsewhere it would 404. */}
+        {process.env.VERCEL && <Analytics />}
       </body>
     </html>
   );
